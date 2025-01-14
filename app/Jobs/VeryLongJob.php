@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NewCommentMail;
+use App\Mail\StatMail;
 use App\Models\Comment;
 
 class VeryLongJob implements ShouldQueue
@@ -28,6 +29,8 @@ class VeryLongJob implements ShouldQueue
      */
     public function handle(): void
     {
-        Mail::to('moosbeere_O@mail.ru')->send(new NewCommentMail($this->comment, $this->article_name));
+        // Mail::to('pertsevlexoos@yandex.ru')->send(new NewCommentMail($this->comment, $this->article_name));
+        Mail::to('pertsevlexoos@yandex.ru')->send(new StatMail(2, 2));
+
     }
 }

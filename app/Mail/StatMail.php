@@ -7,19 +7,17 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailables\Address;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Comment;
+use Illuminate\Mail\Mailables\Address;
 
-class NewCommentMail extends Mailable
+class StatMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(public Comment $comment, public $article_name)
+    public function __construct(public $article_count, public $comment_count)
     {
         //
     }
@@ -31,21 +29,20 @@ class NewCommentMail extends Mailable
     {
         return new Envelope(
             from: new Address('pertsevlexoos@yandex.ru', env('MAIL_FROM_NAME')),
-            subject: 'New Comment Mail',
+            subject: 'Stat Mail',
         );
     }
- 
+
     /**
      * Get the message content definition.
      */
     public function content(): Content
     {
         return new Content(
-            markdown: 'mail.new_comment_shipped',
+            markdown: 'mail.stat_shipped',
             with: [
-                'comment' => $this->comment,
-                'article_name' => $this->article_name,
-                'url' => 'http://127.0.0.1:3000/comment/' . $this->comment->id . '/accept',
+                'article_count' => $this->article_count,
+                'comment_count' => $this->comment_count,
             ]
         );
     }
@@ -57,8 +54,6 @@ class NewCommentMail extends Mailable
      */
     public function attachments(): array
     {
-        return [
-            Attachment::fromPath(public_path() . '/preview.jpg')
-        ];
+        return [];
     }
 }

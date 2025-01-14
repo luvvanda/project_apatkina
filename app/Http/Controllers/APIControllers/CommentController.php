@@ -1,21 +1,23 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\APIControllers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
-use App\Models\Comment;
-use App\Models\Article;
-use App\Jobs\VeryLongJob;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use App\Models\Comment;
+use App\Models\Article;
 use App\Models\User;
 use App\Notifications\NewCommentNotify;
+use App\Jobs\VeryLongJob;
 
 class CommentController extends Controller
 {
+
     public function index()
     {
         $page = isset($_GET['page']) ? $_GET['page'] : 0;
@@ -24,6 +26,7 @@ class CommentController extends Controller
         });
         return view('comments.index', ['comments' => $comments]);
     }
+
     public function store(Request $request)
     {
         $keys = DB::table('cache')->whereRaw('`key` GLOB :key', [':key' => 'comments*[0-9]'])->get();
@@ -80,7 +83,7 @@ class CommentController extends Controller
         $comment = Comment::findOrFail($id);
         Gate::authorize('update_comment', $comment);
         $comment->delete();
-        return redirect()->route('article.show', ['article' => $comment->article_id])->with('status', 'Delete success');
+        return response(1);
     }
 
     public function accept(Comment $comment)
@@ -93,6 +96,7 @@ class CommentController extends Controller
         foreach ($keys as $param) {
             Cache::forget($param->key);
         }
+
         $users = User::where('id', '!=', $comment->user_id)->get();
         $article = Article::findOrFail($comment->article_id);
         $comment->accept = true;
@@ -100,6 +104,7 @@ class CommentController extends Controller
             Notification::send($users, new NewCommentNotify($article, $comment->name));
         return redirect()->route('comment.index');
     }
+
     public function reject(Comment $comment)
     {
         Cache::flush();

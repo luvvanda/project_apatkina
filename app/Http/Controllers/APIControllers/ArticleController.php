@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\APIControllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\Article;
 use App\Models\User;
 use App\Models\Comment;
@@ -24,7 +25,7 @@ class ArticleController extends Controller
         $articles = Cache::remember('articles' . $page, 3000, function () {
             return Article::latest()->paginate(6);
         });
-        return view('article.index', ['articles' => $articles]);
+        return response()->json($articles);
     }
 
     /**
@@ -32,7 +33,7 @@ class ArticleController extends Controller
      */
     public function create()
     {
-        return view('article.create');
+        // return view('article.create');
     }
 
     /**
@@ -57,8 +58,9 @@ class ArticleController extends Controller
         $article->user_id = 1;
         if ($article->save()) {
             NewArticleEvent::dispatch($article);
+            return response(1, 200);
         }
-        return redirect('/article');
+        return response(0, 507);
     }
 
     /**
@@ -68,6 +70,7 @@ class ArticleController extends Controller
     {
         if (isset($_GET['notify']))
             auth()->user()->notifications->where('id', $_GET['notify'])->first()->markAsRead();
+
         $result = Cache::rememberForever('comment_article' . $article->id, function () use ($article) {
             $comments = Comment::where('article_id', $article->id)
                 ->where('accept', true)
@@ -78,15 +81,22 @@ class ArticleController extends Controller
                 'user' => $user
             ];
         });
-        return view('article.show', ['article' => $article, 'user' => $result['user'], 'comments' => $result['comments']]);
+        return response()->json(
+            [
+                'article' => $article,
+                'user' => $result['user'],
+                'comments' => $result['comments']
+            ]
+        );
     }
+
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(Article $article)
     {
-        return view('article.update', ['article' => $article]);
+        return response()->json($article);
     }
 
     /**
@@ -109,9 +119,9 @@ class ArticleController extends Controller
         $article->desc = $request->desc;
         $article->user_id = 1;
         if ($article->save())
-            return redirect('/article')->with('status', 'Update success');
+            return response(1, 200);
         else
-            return redirect()->route('article.index')->with('status', 'Update don`t success');
+            return response(0, 507);
     }
 
     /**
@@ -122,8 +132,8 @@ class ArticleController extends Controller
         Cache::flush();
         Gate::authorize('delete', [self::class]);
         if ($article->delete())
-            return redirect('/article')->with('status', 'Delete success');
+            return response(1, 200)->with('status', 'Delete success');
         else
-            return redirect()->route('article.show', ['article' => $article->id])->with('status', 'Delete don`t success');
+            return response(0, 507)->with('status', 'Delete don`t success');
     }
 }
